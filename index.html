@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Palace - AI Memory Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        
+        #canvas {
+            display: block;
+            cursor: crosshair;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .controls button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .controls button:hover {
+            background: #555;
+        }
+        
+        .memory-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            max-width: 300px;
+        }
+        
+        .title {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .title h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #00ffff;
+        }
+        
+        .title p {
+            margin: 5px 0 0 0;
+            font-size: 11px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="controls">
+        <h3>Memory Palace Controls</h3>
+        <button onclick="addMemory()">Add Memory</button>
+        <button onclick="toggleDecay()">Toggle Decay</button>
+        <button onclick="clearMemories()">Clear All</button>
+        <button onclick="exportFrame()">Export Frame</button>
+        <br><br>
+        <label>Memory Types:</label><br>
+        <button onclick="setMemoryType('visual')">Visual</button>
+        <button onclick="setMemoryType('emotional')">Emotional</button>
+        <button onclick="setMemoryType('linguistic')">Linguistic</button>
+        <button onclick="setMemoryType('abstract')">Abstract</button>
+    </div>
+    
+    <div class="memory-info">
+        <h3>AI Memory System</h3>
+        <div id="memoryStats"></div>
+        <div id="memoryDescription"></div>
+    </div>
+    
+    <div class="title">
+        <h1>Memory Palace</h1>
+        <p>Algorithmic Visualization of Artificial Memory Formation, Storage & Decay</p>
+        <p>Click to create memories • Watch them evolve, merge, and fade</p>
+    </div>
+
+    <script>
+        /**
+         * MEMORY PALACE - AI MEMORY VISUALIZATION
+         * 
+         * This program simulates how an artificial intelligence might form, store,
+         * and lose memories. Each memory is represented as a dynamic visual entity
+         * that undergoes transformation over time.
+         * 
+         * Core Concepts:
+         * - Memory Formation: New memories start as clear, defined patterns
+         * - Memory Strengthening: Frequently accessed memories become more vivid
+         * - Memory Decay: Unused memories gradually fade and fragment
+         * - Memory Interference: Similar memories can merge or conflict
+         * - Memory Networks: Connections form between related memories
+         * 
+         * Technical Implementation:
+         * - Custom particle systems for memory fragments
+         * - Dynamic color mapping based on memory strength and type
+         * - Temporal algorithms for memory evolution
+         * - Network algorithms for memory interconnection
+         */
+
+        class MemoryFragment {
+            constructor(x, y, type, intensity) {
+                this.x = x;
+                this.y = y;
+                this.originalX = x;
+                this.originalY = y;
+                this.type = type;
+                this.intensity = intensity;
+                this.age = 0;
+                this.size = Math.random() * 3 + 1;
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 0.5,
+                    y: (Math.random() - 0.5) * 0.5
+                };
+                this.connections = [];
+                this.decayRate = 0.998;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                this.age++;
+                this.intensity *= this.decayRate;
+                
+                // Brownian motion for memory drift
+                this.velocity.x += (Math.random() - 0.5) * 0.01;
+                this.velocity.y += (Math.random() - 0.5) * 0.01;
+                
+                // Damping
+                this.velocity.x *= 0.99;
+                this.velocity.y *= 0.99;
+                
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                
+                // Pulsing effect for active memories
+                this.pulsePhase += 0.1;
+            }
+
+            draw(ctx) {
+                const alpha = Math.min(this.intensity, 1);
+                const pulse = Math.sin(this.pulsePhase) * 0.3 + 0.7;
+                const displaySize = this.size * pulse;
+                
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                
+                // Memory type determines color
+                const colors = {
+                    visual: [0, 255, 255],      // Cyan
+                    emotional: [255, 100, 100], // Red
+                    linguistic: [100, 255, 100], // Green
+                    abstract: [255, 200, 100]   // Orange
+                };
+                
+                const [r, g, b] = colors[this.type] || [255, 255, 255];
+                
+                // Core memory fragment
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, displaySize, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Memory aura for strong memories
+                if (this.intensity > 0.5) {
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.2})`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, displaySize * 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+        }
+
+        class Memory {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.strength = 1.0;
+                this.age = 0;
+                this.fragments = [];
+                this.connections = [];
+                this.accessCount = 0;
+                this.lastAccessed = 0;
+                this.isActive = true;
+                
+                // Generate initial fragments
+                this.generateFragments();
+            }
+
+            generateFragments() {
+                const fragmentCount = Math.floor(Math.random() * 20) + 10;
+                for (let i = 0; i < fragmentCount; i++) {
+                    const angle = (i / fragmentCount) * Math.PI * 2;
+                    const radius = Math.random() * 50 + 20;
+                    const fx = this.x + Math.cos(angle) * radius;
+                    const fy = this.y + Math.sin(angle) * radius;
+                    
+                    this.fragments.push(new MemoryFragment(fx, fy, this.type, this.strength));
+                }
+            }
+
+            update() {
+                this.age++;
+                
+                // Memory decay based on time since last access
+                const timeSinceAccess = Date.now() - this.lastAccessed;
+                if (timeSinceAccess > 1000) {
+                    this.strength *= 0.9998;
+                }
+                
+                // Update fragments
+                this.fragments.forEach(fragment => {
+                    fragment.update();
+                });
+                
+                // Remove dead fragments
+                this.fragments = this.fragments.filter(f => f.intensity > 0.01);
+                
+                // Memory death
+                if (this.fragments.length === 0 || this.strength < 0.01) {
+                    this.isActive = false;
+                }
+                
+                // Occasionally spawn new fragments for active memories
+                if (this.strength > 0.5 && Math.random() < 0.01) {
+                    this.regenerateFragment();
+                }
+            }
+
+            regenerateFragment() {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 30 + 15;
+                const fx = this.x + Math.cos(angle) * radius;
+                const fy = this.y + Math.sin(angle) * radius;
+                
+                this.fragments.push(new MemoryFragment(fx, fy, this.type, this.strength * 0.8));
+            }
+
+            access() {
+                this.accessCount++;
+                this.lastAccessed = Date.now();
+                this.strength = Math.min(this.strength * 1.1, 1.0);
+                
+                // Strengthen fragments
+                this.fragments.forEach(fragment => {
+                    fragment.intensity = Math.min(fragment.intensity * 1.05, 1.0);
+                });
+            }
+
+            draw(ctx) {
+                // Draw connections to other memories
+                this.connections.forEach(connection => {
+                    const alpha = Math.min(this.strength * connection.strength * 0.3, 0.5);
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.strokeStyle = '#444';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(connection.target.x, connection.target.y);
+                    ctx.stroke();
+                    ctx.restore();
+                });
+                
+                // Draw fragments
+                this.fragments.forEach(fragment => {
+                    fragment.draw(ctx);
+                });
+                
+                // Draw memory core
+                ctx.save();
+                ctx.globalAlpha = this.strength * 0.8;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class MemoryPalace {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.memories = [];
+                this.currentMemoryType = 'visual';
+                this.decayEnabled = true;
+                this.animationId = null;
+                
+                this.setupCanvas();
+                this.setupEventListeners();
+                this.animate();
+            }
+
+            setupCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                
+                window.addEventListener('resize', () => {
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                });
+            }
+
+            setupEventListeners() {
+                this.canvas.addEventListener('click', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    this.addMemoryAt(x, y);
+                });
+                
+                // Auto-generate memories periodically
+                setInterval(() => {
+                    if (Math.random() < 0.1 && this.memories.length < 20) {
+                        this.addRandomMemory();
+                    }
+                }, 2000);
+            }
+
+            addMemoryAt(x, y) {
+                const memory = new Memory(x, y, this.currentMemoryType);
+                this.memories.push(memory);
+                
+                // Create connections to nearby memories
+                this.createConnections(memory);
+                
+                this.updateStats();
+            }
+
+            addRandomMemory() {
+                const x = Math.random() * this.canvas.width;
+                const y = Math.random() * this.canvas.height;
+                const types = ['visual', 'emotional', 'linguistic', 'abstract'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                const memory = new Memory(x, y, type);
+                this.memories.push(memory);
+                this.createConnections(memory);
+                this.updateStats();
+            }
+
+            createConnections(newMemory) {
+                this.memories.forEach(memory => {
+                    if (memory === newMemory) return;
+                    
+                    const distance = Math.sqrt(
+                        Math.pow(memory.x - newMemory.x, 2) + 
+                        Math.pow(memory.y - newMemory.y, 2)
+                    );
+                    
+                    // Connect memories that are close or of similar type
+                    if (distance < 150 || memory.type === newMemory.type) {
+                        const strength = Math.max(0.1, 1 - distance / 200);
+                        
+                        newMemory.connections.push({
+                            target: memory,
+                            strength: strength
+                        });
+                        
+                        memory.connections.push({
+                            target: newMemory,
+                            strength: strength
+                        });
+                    }
+                });
+            }
+
+            update() {
+                // Update all memories
+                this.memories.forEach(memory => {
+                    if (this.decayEnabled) {
+                        memory.update();
+                    }
+                });
+                
+                // Remove dead memories
+                this.memories = this.memories.filter(memory => memory.isActive);
+                
+                // Randomly access memories (simulate AI thinking)
+                if (Math.random() < 0.02 && this.memories.length > 0) {
+                    const randomMemory = this.memories[Math.floor(Math.random() * this.memories.length)];
+                    randomMemory.access();
+                }
+            }
+
+            draw() {
+                // Clear canvas with trail effect
+                this.ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw memories
+                this.memories.forEach(memory => {
+                    memory.draw(this.ctx);
+                });
+                
+                // Draw neural network grid
+                this.drawNeuralGrid();
+            }
+
+            drawNeuralGrid() {
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.1;
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 1;
+                
+                const gridSize = 50;
+                for (let x = 0; x < this.canvas.width; x += gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                
+                for (let y = 0; y < this.canvas.height; y += gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+                
+                this.ctx.restore();
+            }
+
+            animate() {
+                this.update();
+                this.draw();
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+
+            updateStats() {
+                const totalMemories = this.memories.length;
+                const activeMemories = this.memories.filter(m => m.strength > 0.5).length;
+                const fadingMemories = this.memories.filter(m => m.strength <= 0.5 && m.strength > 0.1).length;
+                const totalFragments = this.memories.reduce((sum, m) => sum + m.fragments.length, 0);
+                
+                const typeCount = {
+                    visual: this.memories.filter(m => m.type === 'visual').length,
+                    emotional: this.memories.filter(m => m.type === 'emotional').length,
+                    linguistic: this.memories.filter(m => m.type === 'linguistic').length,
+                    abstract: this.memories.filter(m => m.type === 'abstract').length
+                };
+                
+                document.getElementById('memoryStats').innerHTML = `
+                    <strong>Memory Statistics:</strong><br>
+                    Total Memories: ${totalMemories}<br>
+                    Active: ${activeMemories}<br>
+                    Fading: ${fadingMemories}<br>
+                    Fragments: ${totalFragments}<br><br>
+                    <strong>By Type:</strong><br>
+                    Visual: ${typeCount.visual}<br>
+                    Emotional: ${typeCount.emotional}<br>
+                    Linguistic: ${typeCount.linguistic}<br>
+                    Abstract: ${typeCount.abstract}
+                `;
+                
+                document.getElementById('memoryDescription').innerHTML = `
+                    <strong>Current State:</strong><br>
+                    ${this.getMemoryDescription()}
+                `;
+            }
+
+            getMemoryDescription() {
+                const avgStrength = this.memories.reduce((sum, m) => sum + m.strength, 0) / this.memories.length;
+                
+                if (this.memories.length === 0) return "Empty mind state - no memories formed";
+                if (avgStrength > 0.8) return "Highly active cognitive state - memories are vivid and interconnected";
+                if (avgStrength > 0.5) return "Balanced memory state - formation and decay in equilibrium";
+                if (avgStrength > 0.2) return "Declining memory state - significant decay occurring";
+                return "Fragmenting memory state - most memories are fading";
+            }
+        }
+
+        // Initialize the Memory Palace
+        let memoryPalace;
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('canvas');
+            memoryPalace = new MemoryPalace(canvas);
+            memoryPalace.updateStats();
+        });
+
+        // Control functions
+        function addMemory() {
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            memoryPalace.addMemoryAt(x, y);
+        }
+
+        function toggleDecay() {
+            memoryPalace.decayEnabled = !memoryPalace.decayEnabled;
+        }
+
+        function clearMemories() {
+            memoryPalace.memories = [];
+            memoryPalace.updateStats();
+        }
+
+        function setMemoryType(type) {
+            memoryPalace.currentMemoryType = type;
+        }
+
+        function exportFrame() {
+            const link = document.createElement('a');
+            link.download = `memory-palace-${Date.now()}.png`;
+            link.href = memoryPalace.canvas.toDataURL();
+            link.click();
+        }
+
+        // Auto-start with some initial memories
+        setTimeout(() => {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => addMemory(), i * 500);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
